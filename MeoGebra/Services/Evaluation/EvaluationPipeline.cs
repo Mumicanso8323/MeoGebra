@@ -49,12 +49,13 @@ public sealed class EvaluationPipeline {
         foreach (var function in document.Functions) {
             var functionDiagnostics = new List<Diagnostic>();
             diagnostics[function.Id] = functionDiagnostics;
-            if (string.IsNullOrWhiteSpace(function.ExpressionText)) {
+            var normalizedExpression = UserInputNormalizer.NormalizeUserExpression(function.ExpressionText);
+            if (string.IsNullOrWhiteSpace(normalizedExpression)) {
                 functionDiagnostics.Add(new Diagnostic(DiagnosticCategory.Parse, "Expression is empty."));
                 parseResults[function.Id] = null;
                 continue;
             }
-            var parser = new Parser(function.ExpressionText);
+            var parser = new Parser(normalizedExpression);
             ExpressionInput input;
             try {
                 input = parser.ParseExpressionInput();

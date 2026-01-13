@@ -5,6 +5,7 @@ using System.Linq;
 using System.Windows;
 using System.Windows.Media;
 using System.Windows.Media.Media3D;
+using System.Windows.Threading;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using MeoGebra.Models;
@@ -13,6 +14,7 @@ using MeoGebra.Services;
 using MeoGebra.Services.Evaluation;
 using MeoGebra.Services.History;
 using OxyPlot;
+using OxyPlot.Axes;
 
 namespace MeoGebra.ViewModels;
 
@@ -20,6 +22,9 @@ public partial class MainViewModel : ObservableObject {
     private const int SampleCount = 2000;
     private readonly EvaluationPipeline _pipeline;
     private readonly HistoryService _history = new();
+    private readonly DispatcherTimer _viewportDebounceTimer;
+    private ViewportState? _pendingViewport;
+    private bool _suppressViewportUpdates;
 
     public MainViewModel() {
         Document = CreateDefaultDocument();
@@ -29,6 +34,11 @@ public partial class MainViewModel : ObservableObject {
 
         _pipeline = new EvaluationPipeline(new NativeExpressionSampler());
         PlotModel = PlotModelFactory.CreateEmpty(Document.Viewport);
+        AttachAxisHandlers(PlotModel);
+        _viewportDebounceTimer = new DispatcherTimer {
+            Interval = TimeSpan.FromMilliseconds(100)
+        };
+        _viewportDebounceTimer.Tick += OnViewportDebounceTick;
         UserNotes = Document.UserNotes;
         PlotModeOptions = Enum.GetValues<PlotMode>();
         SurfaceFunctions = new ObservableCollection<FunctionRowViewModel>(Functions.Where(f => f.Parameters.Length == 2));
@@ -209,7 +219,12 @@ public partial class MainViewModel : ObservableObject {
             }
         }
 
+        _suppressViewportUpdates = true;
+        var previousModel = PlotModel;
         PlotModel = PlotModelFactory.CreateDocumentPlot(Document, PaletteProvider.Colors);
+        DetachAxisHandlers(previousModel);
+        AttachAxisHandlers(PlotModel);
+        _suppressViewportUpdates = false;
         DiagnosticsSummary = BuildDiagnosticsSummary();
         SurfaceMesh = result.SurfaceCache?.Mesh;
         RefreshSurfaceFunctions();
@@ -217,6 +232,85 @@ public partial class MainViewModel : ObservableObject {
         foreach (var row in Functions) {
             row.Refresh();
         }
+    }
+
+    private void AttachAxisHandlers(PlotModel model) {
+        var xAxis = model.Axes.FirstOrDefault(axis => axis.Position == AxisPosition.Bottom);
+        var yAxis = model.Axes.FirstOrDefault(axis => axis.Position == AxisPosition.Left);
+        if (xAxis is not null) {
+            xAxis.AxisChanged += OnAxisChanged;
+        }
+        if (yAxis is not null) {
+            yAxis.AxisChanged += OnAxisChanged;
+        }
+    }
+
+    private void DetachAxisHandlers(PlotModel? model) {
+        if (model is null) {
+            return;
+        }
+        var xAxis = model.Axes.FirstOrDefault(axis => axis.Position == AxisPosition.Bottom);
+        var yAxis = model.Axes.FirstOrDefault(axis => axis.Position == AxisPosition.Left);
+        if (xAxis is not null) {
+            xAxis.AxisChanged -= OnAxisChanged;
+        }
+        if (yAxis is not null) {
+            yAxis.AxisChanged -= OnAxisChanged;
+        }
+    }
+
+    private void OnAxisChanged(object? sender, AxisChangedEventArgs e) {
+        if (_suppressViewportUpdates) {
+            return;
+        }
+        if (Application.Current.Dispatcher.CheckAccess()) {
+            ScheduleViewportRefresh();
+        } else {
+            Application.Current.Dispatcher.Invoke(ScheduleViewportRefresh);
+        }
+    }
+
+    private void ScheduleViewportRefresh() {
+        if (PlotModel is null) {
+            return;
+        }
+        var viewport = TryGetViewportFromAxes(PlotModel);
+        if (!viewport.HasValue) {
+            return;
+        }
+        _pendingViewport = viewport;
+        _viewportDebounceTimer.Stop();
+        _viewportDebounceTimer.Start();
+    }
+
+    private void OnViewportDebounceTick(object? sender, EventArgs e) {
+        _viewportDebounceTimer.Stop();
+        if (!_pendingViewport.HasValue) {
+            return;
+        }
+        Document.Viewport = _pendingViewport.Value;
+        _pendingViewport = null;
+        RequestEvaluation();
+    }
+
+    private static ViewportState? TryGetViewportFromAxes(PlotModel model) {
+        var xAxis = model.Axes.FirstOrDefault(axis => axis.Position == AxisPosition.Bottom);
+        var yAxis = model.Axes.FirstOrDefault(axis => axis.Position == AxisPosition.Left);
+        if (xAxis is null || yAxis is null) {
+            return null;
+        }
+        var minX = xAxis.ActualMinimum;
+        var maxX = xAxis.ActualMaximum;
+        var minY = yAxis.ActualMinimum;
+        var maxY = yAxis.ActualMaximum;
+        if (double.IsNaN(minX) || double.IsNaN(maxX) || double.IsNaN(minY) || double.IsNaN(maxY)) {
+            return null;
+        }
+        var centerX = (minX + maxX) / 2;
+        var centerY = (minY + maxY) / 2;
+        var scaleX = Math.Max((maxX - minX) / 2, 1e-3);
+        var scaleY = Math.Max((maxY - minY) / 2, 1e-3);
+        return new ViewportState(centerX, centerY, scaleX, scaleY);
     }
 
     private string BuildDiagnosticsSummary() {

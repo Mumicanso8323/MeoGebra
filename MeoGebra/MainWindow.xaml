@@ -80,9 +80,9 @@
                                                 Command="{Binding DataContext.RemoveFunctionCommand, RelativeSource={RelativeSource AncestorType=Window}}"
                                                 CommandParameter="{Binding}" Margin="6,0,0,0" />
                                     </Grid>
-                                    <controls:MathEditorControl MinHeight="180"
+                                    <controls:MathEditorControl MinHeight="140"
                                                                 HorizontalAlignment="Stretch"
-                                                                VerticalAlignment="Top"
+                                                                VerticalAlignment="Stretch"
                                                                 Text="{Binding ExpressionText, Mode=TwoWay}"
                                                                 PreviewText="{Binding PreviewExpressionText, Mode=TwoWay}" />
                                     <TextBlock Text="{Binding DiagnosticSummary}" Foreground="Firebrick" FontSize="11" TextWrapping="Wrap" />
