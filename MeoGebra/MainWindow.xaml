@@ -1,19 +1,83 @@
 ﻿<Window x:Class="MeoGebra.MainWindow"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-        xmlns:oxy="http://oxyplot.org/wpf"
-        Title="MeoGebra" Width="900" Height="600">
-    <DockPanel Margin="8">
-        <StackPanel DockPanel.Dock="Top" Orientation="Horizontal" Margin="0,0,0,8">
-            <TextBlock VerticalAlignment="Center" Text="a:" Margin="0,0,4,0"/>
-            <TextBox Width="80" Text="{Binding A, UpdateSourceTrigger=PropertyChanged}" Margin="0,0,12,0"/>
+        xmlns:rendering="clr-namespace:MeoGebra.Rendering"
+        Title="MeoGebra" Width="1200" Height="720">
+    <Window.Resources>
+        <BooleanToVisibilityConverter x:Key="BooleanToVisibilityConverter" />
+    </Window.Resources>
+    <Grid Margin="8">
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="280" />
+            <ColumnDefinition Width="*" />
+            <ColumnDefinition Width="320" />
+        </Grid.ColumnDefinitions>
 
-            <TextBlock VerticalAlignment="Center" Text="b:" Margin="0,0,4,0"/>
-            <TextBox Width="80" Text="{Binding B, UpdateSourceTrigger=PropertyChanged}" Margin="0,0,12,0"/>
+        <DockPanel Grid.Column="0">
+            <StackPanel DockPanel.Dock="Top" Orientation="Horizontal" Margin="0,0,0,8">
+                <Button Content="Add" Command="{Binding AddFunctionCommand}" Width="60" Margin="0,0,8,0" />
+                <Button Content="Undo" Command="{Binding UndoCommand}" Width="60" Margin="0,0,8,0" />
+                <Button Content="Redo" Command="{Binding RedoCommand}" Width="60" />
+            </StackPanel>
+            <StackPanel DockPanel.Dock="Top" Orientation="Horizontal" Margin="0,0,0,8">
+                <Button Content="Save" Command="{Binding SaveDocumentCommand}" Width="60" Margin="0,0,8,0" />
+                <Button Content="Load" Command="{Binding LoadDocumentCommand}" Width="60" Margin="0,0,8,0" />
+                <Button Content="AutoFit" Command="{Binding AutoFitCommand}" Width="70" />
+            </StackPanel>
+            <StackPanel DockPanel.Dock="Top" Orientation="Horizontal" Margin="0,0,0,8">
+                <TextBlock Text="Angle:" VerticalAlignment="Center" Margin="0,0,8,0" />
+                <Button Content="Toggle Deg/Rad" Command="{Binding ToggleAngleModeCommand}" />
+            </StackPanel>
 
-            <Button Content="Plot" Command="{Binding PlotCommand}" Width="80"/>
-        </StackPanel>
+            <ScrollViewer VerticalScrollBarVisibility="Auto">
+                <ItemsControl ItemsSource="{Binding Functions}">
+                    <ItemsControl.ItemTemplate>
+                        <DataTemplate>
+                            <Border BorderThickness="1" BorderBrush="#DDDDDD" Margin="0,0,0,8" Padding="6">
+                                <StackPanel>
+                                    <StackPanel Orientation="Horizontal" Margin="0,0,0,4">
+                                        <CheckBox IsChecked="{Binding IsVisible}" VerticalAlignment="Center" Margin="0,0,6,0" />
+                                        <ComboBox Width="50"
+                                                  ItemsSource="{Binding DataContext.PaletteOptions, RelativeSource={RelativeSource AncestorType=Window}}"
+                                                  SelectedValuePath="Index"
+                                                  SelectedValue="{Binding PaletteIndex}" >
+                                            <ComboBox.ItemTemplate>
+                                                <DataTemplate>
+                                                    <Rectangle Width="20" Height="10" Fill="{Binding Color}" />
+                                                </DataTemplate>
+                                            </ComboBox.ItemTemplate>
+                                        </ComboBox>
+                                        <TextBox Width="90" Margin="6,0,0,0" Text="{Binding Name, UpdateSourceTrigger=LostFocus}" />
+                                        <TextBlock Text="!" Foreground="Red" FontWeight="Bold" Margin="6,0,0,0"
+                                                   Visibility="{Binding HasDiagnostics, Converter={StaticResource BooleanToVisibilityConverter}}" />
+                                        <Button Content="Remove" Command="{Binding DataContext.RemoveFunctionCommand, RelativeSource={RelativeSource AncestorType=Window}}"
+                                                CommandParameter="{Binding}" Margin="6,0,0,0" />
+                                    </StackPanel>
+                                    <TextBox Text="{Binding ExpressionText, UpdateSourceTrigger=LostFocus}" />
+                                    <TextBlock Text="{Binding DiagnosticSummary}" Foreground="Firebrick" FontSize="11" TextWrapping="Wrap" />
+                                </StackPanel>
+                            </Border>
+                        </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                </ItemsControl>
+            </ScrollViewer>
+        </DockPanel>
 
-        <oxy:PlotView Model="{Binding PlotModel}" />
-    </DockPanel>
+        <rendering:ViewportCanvas Grid.Column="1" Model="{Binding PlotModel}" />
+
+        <DockPanel Grid.Column="2">
+            <TextBlock DockPanel.Dock="Top" Text="Markdown" FontWeight="Bold" Margin="0,0,0,4" />
+            <ScrollViewer VerticalScrollBarVisibility="Auto">
+                <TextBox Text="{Binding MarkdownSummary}"
+                         IsReadOnly="True"
+                         TextWrapping="Wrap"
+                         Background="White"
+                         BorderThickness="1"
+                         Padding="6" />
+            </ScrollViewer>
+            <TextBlock DockPanel.Dock="Top" Text="Notes" FontWeight="Bold" Margin="0,8,0,4" />
+            <TextBox Text="{Binding UserNotes, UpdateSourceTrigger=PropertyChanged}"
+                     AcceptsReturn="True" Height="150" />
+        </DockPanel>
+    </Grid>
 </Window>

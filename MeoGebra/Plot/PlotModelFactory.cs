@@ -1,4 +1,5 @@
-﻿using MeoGebra.NativeInterop;
+﻿using System.Collections.Generic;
+using MeoGebra.Models;
 using OxyPlot;
 using OxyPlot.Axes;
 using OxyPlot.Series;
@@ -6,25 +7,40 @@ using OxyPlot.Series;
 namespace MeoGebra.Plot;
 
 public static class PlotModelFactory {
-    public static PlotModel CreateEmpty() {
+    public static PlotModel CreateEmpty(ViewportState viewport) {
         var m = new PlotModel { Title = "Function Plot" };
-        m.Axes.Add(new LinearAxis { Position = AxisPosition.Bottom });
-        m.Axes.Add(new LinearAxis { Position = AxisPosition.Left });
+        m.Axes.Add(new LinearAxis {
+            Position = AxisPosition.Bottom,
+            Minimum = viewport.CenterX - viewport.ScaleX,
+            Maximum = viewport.CenterX + viewport.ScaleX
+        });
+        m.Axes.Add(new LinearAxis {
+            Position = AxisPosition.Left,
+            Minimum = viewport.CenterY - viewport.ScaleY,
+            Maximum = viewport.CenterY + viewport.ScaleY
+        });
         return m;
     }
 
-    public static PlotModel CreateLine(PointD[] points, int count, string title) {
-        var m = CreateEmpty();
-        m.Title = title;
+    public static PlotModel CreateDocumentPlot(Document document, IReadOnlyList<OxyColor> palette) {
+        var model = CreateEmpty(document.Viewport);
+        foreach (var function in document.Functions) {
+            if (!function.IsVisible || function.RenderCache is null) {
+                continue;
+            }
+            var color = palette.Count > 0
+                ? palette[function.PaletteIndex % palette.Count]
+                : OxyColors.SkyBlue;
 
-        var s = new LineSeries();
-
-        // ここは最小で。必要ならLineSeries.PointsのListを保持して再利用する形に拡張可
-        s.Points.Capacity = count;
-        for (int i = 0; i < count; i++)
-            s.Points.Add(new DataPoint(points[i].X, points[i].Y));
-
-        m.Series.Add(s);
-        return m;
+            foreach (var segment in function.RenderCache.Segments) {
+                var series = new LineSeries { Color = color, StrokeThickness = 2 };
+                series.Points.Capacity = segment.Points.Count;
+                foreach (var point in segment.Points) {
+                    series.Points.Add(new DataPoint(point.X, point.Y));
+                }
+                model.Series.Add(series);
+            }
+        }
+        return model;
     }
 }
