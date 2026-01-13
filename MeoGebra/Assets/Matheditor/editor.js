@@ -1,6 +1,7 @@
 (function () {
-    const input = document.getElementById('math-input');
-    const preview = document.getElementById('math-preview');
+    const input = document.getElementById('latexInput');
+    const preview = document.getElementById('preview');
+    const errorLine = document.getElementById('math-error');
 
     function post(type, text) {
         if (window.chrome && window.chrome.webview) {
@@ -8,24 +9,33 @@
         }
     }
 
-    function renderPreview(text) {
-        if (window.katex) {
-            try {
-                window.katex.render(text || '\\quad', preview, {
-                    throwOnError: false,
-                    displayMode: true
-                });
-                return;
-            } catch (error) {
-            }
+    function renderPreview(latex) {
+        if (!window.katex) {
+            preview.textContent = latex || '';
+            errorLine.textContent = 'KaTeX failed to load.';
+            return;
         }
-        preview.textContent = text || '';
+
+        errorLine.textContent = '';
+        const safeLatex = latex || '\\quad';
+        try {
+            window.katex.render(safeLatex, preview, {
+                throwOnError: true,
+                displayMode: true
+            });
+        } catch (error) {
+            errorLine.textContent = error && error.message ? error.message : 'Unable to render LaTeX.';
+            window.katex.render(safeLatex, preview, {
+                throwOnError: false,
+                displayMode: true
+            });
+        }
     }
 
     function updatePreview() {
-        const text = input.value.trim();
-        renderPreview(text);
-        post('preview', text);
+        const latex = input.value.trim();
+        renderPreview(latex);
+        post('change', latex);
     }
 
     input.addEventListener('input', () => {
@@ -35,22 +45,17 @@
     input.addEventListener('keydown', (event) => {
         if (event.key === 'Enter' && event.ctrlKey) {
             event.preventDefault();
-            const text = input.value.trim();
-            post('commit', text);
+            const latex = input.value.trim();
+            post('commit', latex);
         }
-    });
-
-    input.addEventListener('blur', () => {
-        const text = input.value.trim();
-        post('commit', text);
     });
 
     window.editor = {
-        setLatex(text) {
-            input.value = text || '';
-            updatePreview();
+        setLatex(latex) {
+            input.value = latex || '';
+            renderPreview(input.value.trim());
         }
     };
 
-    updatePreview();
+    renderPreview(input.value.trim());
 })();

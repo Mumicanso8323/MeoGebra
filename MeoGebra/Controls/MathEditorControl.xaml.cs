@@ -103,7 +103,7 @@ public partial class MathEditorControl : UserControl {
             }
 
             _isUpdatingFromEditor = true;
-            if (payload.Type == "preview") {
+            if (payload.Type == "change") {
                 PreviewText = payload.Text ?? string.Empty;
             } else if (payload.Type == "commit") {
                 Text = payload.Text ?? string.Empty;
