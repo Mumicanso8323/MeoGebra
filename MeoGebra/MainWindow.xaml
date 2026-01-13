@@ -9,9 +9,9 @@
     </Window.Resources>
     <Grid Margin="8">
         <Grid.ColumnDefinitions>
-            <ColumnDefinition Width="280" />
+            <ColumnDefinition Width="320" MinWidth="320" />
+            <ColumnDefinition Width="6" />
             <ColumnDefinition Width="*" />
-            <ColumnDefinition Width="320" />
         </Grid.ColumnDefinitions>
 
         <DockPanel Grid.Column="0">
@@ -47,9 +47,17 @@
                         <DataTemplate>
                             <Border BorderThickness="1" BorderBrush="#DDDDDD" Margin="0,0,0,8" Padding="6">
                                 <StackPanel>
-                                    <StackPanel Orientation="Horizontal" Margin="0,0,0,4">
-                                        <CheckBox IsChecked="{Binding IsVisible}" VerticalAlignment="Center" Margin="0,0,6,0" />
-                                        <ComboBox Width="50"
+                                    <Grid Margin="0,0,0,4">
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="Auto" />
+                                            <ColumnDefinition Width="Auto" />
+                                            <ColumnDefinition Width="*" />
+                                            <ColumnDefinition Width="Auto" />
+                                            <ColumnDefinition Width="Auto" />
+                                            <ColumnDefinition Width="Auto" />
+                                        </Grid.ColumnDefinitions>
+                                        <CheckBox Grid.Column="0" IsChecked="{Binding IsVisible}" VerticalAlignment="Center" Margin="0,0,6,0" />
+                                        <ComboBox Grid.Column="1" Width="50"
                                                   ItemsSource="{Binding DataContext.PaletteOptions, RelativeSource={RelativeSource AncestorType=Window}}"
                                                   SelectedValuePath="Index"
                                                   SelectedValue="{Binding PaletteIndex}" >
@@ -59,13 +67,20 @@
                                                 </DataTemplate>
                                             </ComboBox.ItemTemplate>
                                         </ComboBox>
-                                        <TextBox Width="90" Margin="6,0,0,0" Text="{Binding Name, UpdateSourceTrigger=LostFocus}" />
-                                        <TextBlock Text="!" Foreground="Red" FontWeight="Bold" Margin="6,0,0,0"
+                                        <TextBox Grid.Column="2" Margin="6,0,0,0" MinWidth="120" Text="{Binding Name, UpdateSourceTrigger=LostFocus}" />
+                                        <StackPanel Grid.Column="3" Orientation="Horizontal" Margin="6,0,0,0" VerticalAlignment="Center">
+                                            <TextBlock Text="Params" Margin="0,0,4,0" />
+                                            <TextBox MinWidth="80"
+                                                     MaxWidth="120"
+                                                     Text="{Binding ParametersText, UpdateSourceTrigger=LostFocus}" />
+                                        </StackPanel>
+                                        <TextBlock Grid.Column="4" Text="!" Foreground="Red" FontWeight="Bold" Margin="6,0,0,0"
                                                    Visibility="{Binding HasDiagnostics, Converter={StaticResource BooleanToVisibilityConverter}}" />
-                                        <Button Content="Remove" Command="{Binding DataContext.RemoveFunctionCommand, RelativeSource={RelativeSource AncestorType=Window}}"
+                                        <Button Grid.Column="5" Content="Remove"
+                                                Command="{Binding DataContext.RemoveFunctionCommand, RelativeSource={RelativeSource AncestorType=Window}}"
                                                 CommandParameter="{Binding}" Margin="6,0,0,0" />
-                                    </StackPanel>
-                                    <controls:MathEditorControl Height="70"
+                                    </Grid>
+                                    <controls:MathEditorControl MinHeight="84"
                                                                 Text="{Binding ExpressionText, Mode=TwoWay}"
                                                                 PreviewText="{Binding PreviewExpressionText, Mode=TwoWay}" />
                                     <TextBlock Text="{Binding DiagnosticSummary}" Foreground="Firebrick" FontSize="11" TextWrapping="Wrap" />
@@ -77,26 +92,39 @@
             </ScrollViewer>
         </DockPanel>
 
-        <Grid Grid.Column="1">
-            <rendering:ViewportCanvas Model="{Binding PlotModel}"
-                                      Visibility="{Binding IsTwoDMode, Converter={StaticResource BooleanToVisibilityConverter}}" />
-            <rendering:Viewport3DControl Mesh="{Binding SurfaceMesh}"
-                                         Visibility="{Binding IsThreeDMode, Converter={StaticResource BooleanToVisibilityConverter}}" />
-        </Grid>
+        <GridSplitter Grid.Column="1"
+                      HorizontalAlignment="Stretch"
+                      VerticalAlignment="Stretch"
+                      ResizeBehavior="PreviousAndNext"
+                      Background="#DDDDDD" />
 
-        <DockPanel Grid.Column="2">
-            <TextBlock DockPanel.Dock="Top" Text="Diagnostics / Notes" FontWeight="Bold" Margin="0,0,0,4" />
-            <ScrollViewer VerticalScrollBarVisibility="Auto">
-                <TextBox Text="{Binding DiagnosticsSummary}"
-                         IsReadOnly="True"
-                         TextWrapping="Wrap"
-                         Background="White"
-                         BorderThickness="1"
-                         Padding="6" />
-            </ScrollViewer>
-            <TextBlock DockPanel.Dock="Top" Text="Notes" FontWeight="Bold" Margin="0,8,0,4" />
-            <TextBox Text="{Binding UserNotes, UpdateSourceTrigger=PropertyChanged}"
-                     AcceptsReturn="True" Height="150" />
-        </DockPanel>
+        <Grid Grid.Column="2">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="320" MinWidth="260" />
+            </Grid.ColumnDefinitions>
+
+            <Grid Grid.Column="0">
+                <rendering:ViewportCanvas Model="{Binding PlotModel}"
+                                          Visibility="{Binding IsTwoDMode, Converter={StaticResource BooleanToVisibilityConverter}}" />
+                <rendering:Viewport3DControl Mesh="{Binding SurfaceMesh}"
+                                             Visibility="{Binding IsThreeDMode, Converter={StaticResource BooleanToVisibilityConverter}}" />
+            </Grid>
+
+            <DockPanel Grid.Column="1">
+                <TextBlock DockPanel.Dock="Top" Text="Diagnostics / Notes" FontWeight="Bold" Margin="0,0,0,4" />
+                <ScrollViewer VerticalScrollBarVisibility="Auto">
+                    <TextBox Text="{Binding DiagnosticsSummary}"
+                             IsReadOnly="True"
+                             TextWrapping="Wrap"
+                             Background="White"
+                             BorderThickness="1"
+                             Padding="6" />
+                </ScrollViewer>
+                <TextBlock DockPanel.Dock="Top" Text="Notes" FontWeight="Bold" Margin="0,8,0,4" />
+                <TextBox Text="{Binding UserNotes, UpdateSourceTrigger=PropertyChanged}"
+                         AcceptsReturn="True" Height="150" />
+            </DockPanel>
+        </Grid>
     </Grid>
 </Window>

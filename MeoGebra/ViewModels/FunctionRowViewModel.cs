@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Linq;
+using System.Text.RegularExpressions;
 using CommunityToolkit.Mvvm.ComponentModel;
 using MeoGebra.Models;
 using MeoGebra.Services.History;
@@ -23,6 +24,20 @@ public partial class FunctionRowViewModel : ObservableObject {
 
     public Guid Id => _function.Id;
     public string[] Parameters => _function.Parameters;
+
+    public string ParametersText {
+        get => string.Join(",", _function.Parameters);
+        set {
+            var parsed = ParseParameters(value);
+            if (_function.Parameters.SequenceEqual(parsed)) {
+                return;
+            }
+            _function.Parameters = parsed;
+            OnPropertyChanged(nameof(Parameters));
+            OnPropertyChanged();
+            _onEdited();
+        }
+    }
 
     public string Name {
         get => _function.Name;
@@ -90,7 +105,18 @@ public partial class FunctionRowViewModel : ObservableObject {
     public string DiagnosticSummary => string.Join("; ", _function.Diagnostics.Select(d => d.ToString()));
 
     public string DisplayName => string.IsNullOrWhiteSpace(Name) ? "(unnamed)" : Name;
-    
+
+    private static string[] ParseParameters(string? input) {
+        var tokens = (input ?? string.Empty)
+            .Split(new[] { ',', ' ' }, StringSplitOptions.RemoveEmptyEntries)
+            .Select(token => token.Trim())
+            .Where(token => Regex.IsMatch(token, @"^[A-Za-z_][A-Za-z0-9_]*$"))
+            .Distinct(StringComparer.OrdinalIgnoreCase)
+            .ToArray();
+
+        return tokens.Length == 0 ? new[] { "x" } : tokens;
+    }
+
     public void Refresh() {
         _committedExpression = _function.ExpressionText;
         OnPropertyChanged(nameof(Name));
@@ -100,5 +126,6 @@ public partial class FunctionRowViewModel : ObservableObject {
         OnPropertyChanged(nameof(ExpressionText));
         OnPropertyChanged(nameof(PreviewExpressionText));
         OnPropertyChanged(nameof(Parameters));
+        OnPropertyChanged(nameof(ParametersText));
     }
 }

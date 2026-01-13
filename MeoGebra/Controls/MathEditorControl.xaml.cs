@@ -44,16 +44,28 @@ public partial class MathEditorControl : UserControl {
             return;
         }
 
-        var userDataFolder = Path.Combine(
-            Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
-            "MeoGebra",
-            "WebView2");
-        Directory.CreateDirectory(userDataFolder);
+        try {
+            RuntimeOverlay.Visibility = Visibility.Collapsed;
+            EditorView.Visibility = Visibility.Visible;
 
-        var environment = await CoreWebView2Environment.CreateAsync(userDataFolder: userDataFolder);
-        await EditorView.EnsureCoreWebView2Async(environment);
+            var userDataFolder = Path.Combine(
+                Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
+                "MeoGebra",
+                "WebView2");
+            Directory.CreateDirectory(userDataFolder);
+
+            var environment = await CoreWebView2Environment.CreateAsync(userDataFolder: userDataFolder);
+            await EditorView.EnsureCoreWebView2Async(environment);
+        } catch (WebView2RuntimeNotFoundException) {
+            ShowRuntimeMessage("WebView2 runtime is not installed. Please install the Microsoft Edge WebView2 Runtime.");
+            return;
+        } catch (Exception ex) {
+            ShowRuntimeMessage($"Failed to initialize the math editor: {ex.Message}");
+            return;
+        }
 
         if (EditorView.CoreWebView2 == null) {
+            ShowRuntimeMessage("WebView2 failed to initialize.");
             return;
         }
 
@@ -92,9 +104,9 @@ public partial class MathEditorControl : UserControl {
 
             _isUpdatingFromEditor = true;
             if (payload.Type == "preview") {
-                PreviewText = NormalizeExpression(payload.Text ?? string.Empty);
+                PreviewText = payload.Text ?? string.Empty;
             } else if (payload.Type == "commit") {
-                Text = NormalizeExpression(payload.Text ?? string.Empty);
+                Text = payload.Text ?? string.Empty;
             }
         } finally {
             _isUpdatingFromEditor = false;
@@ -112,26 +124,13 @@ public partial class MathEditorControl : UserControl {
             return;
         }
         var escaped = JsonSerializer.Serialize(text ?? string.Empty);
-        await EditorView.ExecuteScriptAsync($"window.editor && window.editor.setText({escaped});");
+        await EditorView.ExecuteScriptAsync($"window.editor && window.editor.setLatex({escaped});");
     }
 
-    private static string NormalizeExpression(string input) {
-        if (string.IsNullOrWhiteSpace(input)) {
-            return string.Empty;
-        }
-
-        var normalized = input
-            .Replace("×", "*")
-            .Replace("÷", "/")
-            .Replace("−", "-")
-            .Replace("π", "pi")
-            .Replace("×", "*");
-
-        normalized = System.Text.RegularExpressions.Regex.Replace(normalized, @"(\d)([a-zA-Z(])", "$1*$2");
-        normalized = System.Text.RegularExpressions.Regex.Replace(normalized, @"([a-zA-Z)])(\d)", "$1*$2");
-        normalized = System.Text.RegularExpressions.Regex.Replace(normalized, @"([a-zA-Z)])([a-zA-Z(])", "$1*$2");
-
-        return normalized;
+    private void ShowRuntimeMessage(string message) {
+        RuntimeMessage.Text = message;
+        RuntimeOverlay.Visibility = Visibility.Visible;
+        EditorView.Visibility = Visibility.Collapsed;
     }
 
     private sealed record EditorMessage(string Type, string? Text);

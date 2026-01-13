@@ -5,5 +5,13 @@
              Height="32">
     <Grid>
         <wv2:WebView2 x:Name="EditorView" />
+        <Border x:Name="RuntimeOverlay"
+                Background="White"
+                Visibility="Collapsed">
+            <TextBlock x:Name="RuntimeMessage"
+                       TextWrapping="Wrap"
+                       Foreground="Firebrick"
+                       Margin="8" />
+        </Border>
     </Grid>
 </UserControl>

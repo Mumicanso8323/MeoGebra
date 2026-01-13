@@ -109,7 +109,7 @@ public sealed class EvaluationPipeline {
             if (document.PlotMode == PlotMode.TwoD && function.Parameters.Length != 1) {
                 diagnostics[functionId].Add(new Diagnostic(
                     DiagnosticCategory.Bind,
-                    "2D plot mode supports only single-variable functions (x)."));
+                    "2D plot mode requires a single parameter (x)."));
                 continue;
             }
 
@@ -117,8 +117,10 @@ public sealed class EvaluationPipeline {
                 continue;
             }
 
-            if (document.PlotMode == PlotMode.ThreeD && function.Parameters.Length != 1) {
-                diagnostics[functionId].Add(new Diagnostic(DiagnosticCategory.Bind, "2D plot mode requires a single variable (x)."));
+            if (document.PlotMode == PlotMode.ThreeD && function.Parameters.Length != 2) {
+                diagnostics[functionId].Add(new Diagnostic(
+                    DiagnosticCategory.Bind,
+                    "3D plot mode requires two parameters (x, y)."));
                 continue;
             }
 
