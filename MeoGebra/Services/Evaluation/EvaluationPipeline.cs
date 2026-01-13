@@ -100,6 +100,19 @@ public sealed class EvaluationPipeline {
 
         foreach (var functionId in order) {
             token.ThrowIfCancellationRequested();
+
+            var function = document.FindFunction(functionId);
+            if (function is null) {
+                continue;
+            }
+
+            if (document.PlotMode == PlotMode.TwoD && function.Parameters.Length != 1) {
+                diagnostics[functionId].Add(new Diagnostic(
+                    DiagnosticCategory.Bind,
+                    "2D plot mode supports only single-variable functions (x)."));
+                continue;
+            }
+
             if (!parseResults.TryGetValue(functionId, out var bound) || bound is null) {
                 continue;
             }

@@ -53,6 +53,10 @@ public partial class MathEditorControl : UserControl {
         var environment = await CoreWebView2Environment.CreateAsync(userDataFolder: userDataFolder);
         await EditorView.EnsureCoreWebView2Async(environment);
 
+        if (EditorView.CoreWebView2 == null) {
+            return;
+        }
+
         EditorView.CoreWebView2.Settings.AreDevToolsEnabled = false;
         EditorView.CoreWebView2.Settings.IsStatusBarEnabled = false;
         EditorView.CoreWebView2.Settings.AreDefaultContextMenusEnabled = false;
