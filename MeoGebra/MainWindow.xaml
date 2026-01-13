@@ -1,0 +1,19 @@
+﻿<Window x:Class="MeoGebra.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:oxy="http://oxyplot.org/wpf"
+        Title="MeoGebra" Width="900" Height="600">
+    <DockPanel Margin="8">
+        <StackPanel DockPanel.Dock="Top" Orientation="Horizontal" Margin="0,0,0,8">
+            <TextBlock VerticalAlignment="Center" Text="a:" Margin="0,0,4,0"/>
+            <TextBox Width="80" Text="{Binding A, UpdateSourceTrigger=PropertyChanged}" Margin="0,0,12,0"/>
+
+            <TextBlock VerticalAlignment="Center" Text="b:" Margin="0,0,4,0"/>
+            <TextBox Width="80" Text="{Binding B, UpdateSourceTrigger=PropertyChanged}" Margin="0,0,12,0"/>
+
+            <Button Content="Plot" Command="{Binding PlotCommand}" Width="80"/>
+        </StackPanel>
+
+        <oxy:PlotView Model="{Binding PlotModel}" />
+    </DockPanel>
+</Window>

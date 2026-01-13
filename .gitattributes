@@ -1,0 +1,19 @@
+# Auto-detect text files and normalize line endings
+* text=auto
+
+# C# / XAML
+*.cs     text diff=csharp
+*.xaml   text
+
+# C / C++
+*.cpp    text
+*.h      text
+
+# Project files
+*.csproj text
+*.vcxproj text
+*.sln    text
+
+# Scripts
+*.bat    text eol=crlf
+*.ps1    text eol=crlf
