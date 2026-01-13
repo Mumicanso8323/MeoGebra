@@ -1,6 +1,7 @@
 ﻿using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
+using System.Windows.Controls;
 using MeoGebra.Models;
 using MeoGebra.Services.Expression;
 
@@ -11,11 +12,12 @@ public interface IExpressionSampler {
 }
 
 public sealed class EvaluationContext {
-    public EvaluationContext(double x0, double x1, int samples, AngleMode angleMode, IReadOnlyDictionary<Guid, double[]> dependencies) {
+    public EvaluationContext(double x0, double x1, int samples, AngleMode angleMode, ViewportState viewport, IReadOnlyDictionary<Guid, double[]> dependencies) {
         X0 = x0;
         X1 = x1;
         Samples = samples;
         AngleMode = angleMode;
+        Viewport = viewport;
         Dependencies = dependencies;
     }
 
@@ -23,6 +25,7 @@ public sealed class EvaluationContext {
     public double X1 { get; }
     public int Samples { get; }
     public AngleMode AngleMode { get; }
+    public ViewportState Viewport { get; }
     public IReadOnlyDictionary<Guid, double[]> Dependencies { get; }
 }
 

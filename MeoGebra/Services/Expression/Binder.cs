@@ -6,10 +6,25 @@ namespace MeoGebra.Services.Expression;
 
 public sealed class Binder {
     private readonly SymbolTable _symbols;
+    private readonly Dictionary<string, VariableKind> _parameters;
     private readonly DiagnosticBag _diagnostics = new();
 
-    public Binder(SymbolTable symbols) {
+    public Binder(SymbolTable symbols, IReadOnlyList<string> parameters) {
         _symbols = symbols;
+        _parameters = new Dictionary<string, VariableKind>(StringComparer.OrdinalIgnoreCase);
+        if (parameters.Count == 0) {
+            _parameters["x"] = VariableKind.X;
+        } else {
+            foreach (var parameter in parameters) {
+                if (string.Equals(parameter, "x", StringComparison.OrdinalIgnoreCase)) {
+                    _parameters["x"] = VariableKind.X;
+                } else if (string.Equals(parameter, "y", StringComparison.OrdinalIgnoreCase)) {
+                    _parameters["y"] = VariableKind.Y;
+                } else {
+                    _diagnostics.Add(DiagnosticCategory.Bind, $"Unsupported parameter '{parameter}'. Use x or y.");
+                }
+            }
+        }
     }
 
     public BoundResult Bind(ExpressionNode node) {
@@ -32,8 +47,14 @@ public sealed class Binder {
 
     private BoundExpression BindIdentifier(IdentifierNode identifier) {
         var name = identifier.Name;
+        if (_parameters.TryGetValue(name, out var variable)) {
+            return new BoundVariable(variable);
+        }
         if (string.Equals(name, "x", StringComparison.OrdinalIgnoreCase)) {
-            return new BoundVariable();
+            return new BoundVariable(VariableKind.X);
+        }
+        if (string.Equals(name, "y", StringComparison.OrdinalIgnoreCase)) {
+            return new BoundVariable(VariableKind.Y);
         }
         if (string.Equals(name, "pi", StringComparison.OrdinalIgnoreCase)) {
             return new BoundConstant(Math.PI);

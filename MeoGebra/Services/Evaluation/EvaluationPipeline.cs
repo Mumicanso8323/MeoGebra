@@ -42,6 +42,7 @@ public sealed class EvaluationPipeline {
     public async Task<EvaluationResult> EvaluateAsync(Document document, int samples, CancellationToken token) {
         var parseResults = new Dictionary<Guid, BoundFunction?>();
         var diagnostics = new Dictionary<Guid, List<Diagnostic>>();
+        SurfaceRenderCache? surfaceCache = null;
 
         document.Symbols.Restore(document.Functions);
 
@@ -68,7 +69,14 @@ public sealed class EvaluationPipeline {
                 document.Symbols.SetName(function.Name, function.Id);
             }
 
-            var binder = new Binder(document.Symbols);
+            if (input.Parameters.Count > 0) {
+                function.Parameters = input.Parameters.ToArray();
+            }
+            if (function.Parameters.Length == 0) {
+                function.Parameters = new[] { "x" };
+            }
+
+            var binder = new Binder(document.Symbols, function.Parameters);
             var boundResult = binder.Bind(input.Body);
             functionDiagnostics.AddRange(boundResult.Diagnostics.Items);
 
@@ -96,11 +104,17 @@ public sealed class EvaluationPipeline {
                 continue;
             }
 
+            if (document.PlotMode == PlotMode.ThreeD && function.Parameters.Length != 1) {
+                diagnostics[functionId].Add(new Diagnostic(DiagnosticCategory.Bind, "2D plot mode requires a single variable (x)."));
+                continue;
+            }
+
             var context = new EvaluationContext(
                 document.Viewport.CenterX - document.Viewport.ScaleX,
                 document.Viewport.CenterX + document.Viewport.ScaleX,
                 samples,
                 document.AngleMode,
+                document.Viewport,
                 sampledValues);
 
             var cache = await _sampler.SampleAsync(bound, context, token).ConfigureAwait(false);
@@ -110,7 +124,7 @@ public sealed class EvaluationPipeline {
             var step = (context.X1 - context.X0) / (samples - 1);
             for (var i = 0; i < samples; i++) {
                 var x = context.X0 + step * i;
-                values[i] = ExpressionEvaluator.Evaluate(bound.Expression, x, document.AngleMode, sampledValues, i);
+                values[i] = ExpressionEvaluator.Evaluate(bound.Expression, x, 0, document.AngleMode, sampledValues, i);
             }
             sampledValues[functionId] = values;
 
@@ -119,7 +133,31 @@ public sealed class EvaluationPipeline {
             }
         }
 
-        return new EvaluationResult(renderCaches, diagnostics);
+        if (document.PlotMode == PlotMode.ThreeD) {
+            var surfaceTarget = FindSurfaceTarget(document, parseResults);
+            if (surfaceTarget is not null) {
+                var boundSurface = parseResults[surfaceTarget.Id];
+                if (boundSurface is not null) {
+                    surfaceCache = await SurfaceSampler.SampleAsync(
+                        boundSurface,
+                        document.Viewport,
+                        document.AngleMode,
+                        token).ConfigureAwait(false);
+                }
+            }
+        }
+
+        return new EvaluationResult(renderCaches, diagnostics, surfaceCache);
+    }
+
+    private static FunctionObject? FindSurfaceTarget(Document document, Dictionary<Guid, BoundFunction?> parseResults) {
+        if (document.SelectedSurfaceFunctionId.HasValue) {
+            var selected = document.FindFunction(document.SelectedSurfaceFunctionId.Value);
+            if (selected is not null && selected.Parameters.Length == 2 && parseResults.ContainsKey(selected.Id)) {
+                return selected;
+            }
+        }
+        return document.Functions.FirstOrDefault(f => f.Parameters.Length == 2 && parseResults.ContainsKey(f.Id));
     }
 
     private static List<Guid> TopologicalSort(Dictionary<Guid, BoundFunction?> functions, Dictionary<Guid, List<Diagnostic>> diagnostics) {
@@ -165,4 +203,4 @@ public sealed class EvaluationPipeline {
     }
 }
 
-public sealed record EvaluationResult(Dictionary<Guid, FunctionRenderCache> RenderCaches, Dictionary<Guid, List<Diagnostic>> Diagnostics);
+public sealed record EvaluationResult(Dictionary<Guid, FunctionRenderCache> RenderCaches, Dictionary<Guid, List<Diagnostic>> Diagnostics, SurfaceRenderCache? SurfaceCache);

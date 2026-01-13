@@ -7,6 +7,7 @@ public sealed class FunctionObject {
     public Guid Id { get; set; } = Guid.NewGuid();
     public string Name { get; set; } = "f";
     public string ExpressionText { get; set; } = "sin(x)";
+    public string[] Parameters { get; set; } = new[] { "x" };
     public bool IsVisible { get; set; } = true;
     public int PaletteIndex { get; set; }
 
@@ -37,3 +38,11 @@ public sealed class FunctionSegment {
 }
 
 public readonly record struct SamplePoint(double X, double Y);
+
+public sealed class SurfaceRenderCache {
+    public SurfaceRenderCache(System.Windows.Media.Media3D.MeshGeometry3D mesh) {
+        Mesh = mesh;
+    }
+
+    public System.Windows.Media.Media3D.MeshGeometry3D Mesh { get; }
+}

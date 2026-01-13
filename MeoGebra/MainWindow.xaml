@@ -1,6 +1,7 @@
 ﻿<Window x:Class="MeoGebra.MainWindow"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:controls="clr-namespace:MeoGebra.Controls"
         xmlns:rendering="clr-namespace:MeoGebra.Rendering"
         Title="MeoGebra" Width="1200" Height="720">
     <Window.Resources>
@@ -28,6 +29,17 @@
                 <TextBlock Text="Angle:" VerticalAlignment="Center" Margin="0,0,8,0" />
                 <Button Content="Toggle Deg/Rad" Command="{Binding ToggleAngleModeCommand}" />
             </StackPanel>
+            <StackPanel DockPanel.Dock="Top" Orientation="Horizontal" Margin="0,0,0,8">
+                <TextBlock Text="Mode:" VerticalAlignment="Center" Margin="0,0,8,0" />
+                <ComboBox Width="80" ItemsSource="{Binding PlotModeOptions}" SelectedItem="{Binding PlotMode}" />
+                <ComboBox Width="140" Margin="6,0,0,0"
+                          ItemsSource="{Binding SurfaceFunctions}"
+                          SelectedValuePath="Id"
+                          DisplayMemberPath="DisplayName"
+                          SelectedValue="{Binding SelectedSurfaceFunctionId}"
+                          Visibility="{Binding IsThreeDMode, Converter={StaticResource BooleanToVisibilityConverter}}" />
+            </StackPanel>
+
 
             <ScrollViewer VerticalScrollBarVisibility="Auto">
                 <ItemsControl ItemsSource="{Binding Functions}">
@@ -53,7 +65,9 @@
                                         <Button Content="Remove" Command="{Binding DataContext.RemoveFunctionCommand, RelativeSource={RelativeSource AncestorType=Window}}"
                                                 CommandParameter="{Binding}" Margin="6,0,0,0" />
                                     </StackPanel>
-                                    <TextBox Text="{Binding ExpressionText, UpdateSourceTrigger=LostFocus}" />
+                                    <controls:MathEditorControl Height="70"
+                                                                Text="{Binding ExpressionText, Mode=TwoWay}"
+                                                                PreviewText="{Binding PreviewExpressionText, Mode=TwoWay}" />
                                     <TextBlock Text="{Binding DiagnosticSummary}" Foreground="Firebrick" FontSize="11" TextWrapping="Wrap" />
                                 </StackPanel>
                             </Border>
@@ -63,12 +77,17 @@
             </ScrollViewer>
         </DockPanel>
 
-        <rendering:ViewportCanvas Grid.Column="1" Model="{Binding PlotModel}" />
+        <Grid Grid.Column="1">
+            <rendering:ViewportCanvas Model="{Binding PlotModel}"
+                                      Visibility="{Binding IsTwoDMode, Converter={StaticResource BooleanToVisibilityConverter}}" />
+            <rendering:Viewport3DControl Mesh="{Binding SurfaceMesh}"
+                                         Visibility="{Binding IsThreeDMode, Converter={StaticResource BooleanToVisibilityConverter}}" />
+        </Grid>
 
         <DockPanel Grid.Column="2">
-            <TextBlock DockPanel.Dock="Top" Text="Markdown" FontWeight="Bold" Margin="0,0,0,4" />
+            <TextBlock DockPanel.Dock="Top" Text="Diagnostics / Notes" FontWeight="Bold" Margin="0,0,0,4" />
             <ScrollViewer VerticalScrollBarVisibility="Auto">
-                <TextBox Text="{Binding MarkdownSummary}"
+                <TextBox Text="{Binding DiagnosticsSummary}"
                          IsReadOnly="True"
                          TextWrapping="Wrap"
                          Background="White"

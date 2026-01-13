@@ -15,4 +15,15 @@ internal static class NativeMethods {
         FunctionParams p,
         IntPtr outPoints // PointD*
     );
+
+    [DllImport(DllName, CallingConvention = CallingConvention.Cdecl)]
+    internal static extern int SampleFunctionExp(
+        FunctionKind kind,
+        double x0,
+        double x1,
+        int n,
+        FunctionParams p,
+        double yLimit,
+        IntPtr outPoints // SampleResult*
+    );
 }

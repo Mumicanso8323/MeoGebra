@@ -4,7 +4,7 @@ using System.Collections.ObjectModel;
 using System.Linq;
 using System.Windows;
 using System.Windows.Media;
-using System.Xml.Linq;
+using System.Windows.Media.Media3D;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using MeoGebra.Models;
@@ -27,20 +27,25 @@ public partial class MainViewModel : ObservableObject {
         Functions = new ObservableCollection<FunctionRowViewModel>(
             Document.Functions.Select(f => new FunctionRowViewModel(f, Document, _history, RequestEvaluation)));
 
-        _pipeline = new EvaluationPipeline(new ManagedExpressionSampler());
+        _pipeline = new EvaluationPipeline(new NativeExpressionSampler());
         PlotModel = PlotModelFactory.CreateEmpty(Document.Viewport);
-        UserNotes = Document.UserMarkdownNotes;
+        UserNotes = Document.UserNotes;
+        PlotModeOptions = Enum.GetValues<PlotMode>();
+        SurfaceFunctions = new ObservableCollection<FunctionRowViewModel>(Functions.Where(f => f.Parameters.Length == 2));
         RequestEvaluation();
     }
 
     public Document Document { get; private set; }
 
     [ObservableProperty] private PlotModel plotModel;
-    [ObservableProperty] private string markdownSummary = string.Empty;
+    [ObservableProperty] private string diagnosticsSummary = string.Empty;
     [ObservableProperty] private string userNotes = string.Empty;
+    [ObservableProperty] private MeshGeometry3D? surfaceMesh;
 
     public ObservableCollection<FunctionRowViewModel> Functions { get; private set; }
     public IReadOnlyList<PaletteOption> PaletteOptions { get; }
+    public Array PlotModeOptions { get; }
+    public ObservableCollection<FunctionRowViewModel> SurfaceFunctions { get; private set; }
 
     public AngleMode AngleMode {
         get => Document.AngleMode;
@@ -53,9 +58,36 @@ public partial class MainViewModel : ObservableObject {
         }
     }
 
+    public PlotMode PlotMode {
+        get => Document.PlotMode;
+        set {
+            if (Document.PlotMode != value) {
+                Document.PlotMode = value;
+                OnPropertyChanged();
+                OnPropertyChanged(nameof(IsTwoDMode));
+                OnPropertyChanged(nameof(IsThreeDMode));
+                RequestEvaluation();
+            }
+        }
+    }
+
+    public bool IsTwoDMode => Document.PlotMode == PlotMode.TwoD;
+    public bool IsThreeDMode => Document.PlotMode == PlotMode.ThreeD;
+
+    public Guid? SelectedSurfaceFunctionId {
+        get => Document.SelectedSurfaceFunctionId;
+        set {
+            if (Document.SelectedSurfaceFunctionId != value) {
+                Document.SelectedSurfaceFunctionId = value;
+                OnPropertyChanged();
+                RequestEvaluation();
+            }
+        }
+    }
+
     partial void OnUserNotesChanged(string value) {
-        Document.UserMarkdownNotes = value;
-        MarkdownSummary = BuildMarkdownSummary();
+        Document.UserNotes = value;
+        DiagnosticsSummary = BuildDiagnosticsSummary();
     }
 
     [RelayCommand]
@@ -67,6 +99,7 @@ public partial class MainViewModel : ObservableObject {
         };
         _history.Execute(new AddFunctionCommand(Document, function), Document);
         Functions.Add(new FunctionRowViewModel(function, Document, _history, RequestEvaluation));
+        RefreshSurfaceFunctions();
         RequestEvaluation();
     }
 
@@ -81,6 +114,7 @@ public partial class MainViewModel : ObservableObject {
         }
         _history.Execute(new RemoveFunctionCommand(Document, model), Document);
         Functions.Remove(function);
+        RefreshSurfaceFunctions();
         RequestEvaluation();
     }
 
@@ -141,7 +175,11 @@ public partial class MainViewModel : ObservableObject {
         if (dialog.ShowDialog() == true) {
             Document = DocumentPersistence.Load(dialog.FileName);
             RebuildFunctionViewModels();
-            UserNotes = Document.UserMarkdownNotes;
+            UserNotes = Document.UserNotes;
+            OnPropertyChanged(nameof(PlotMode));
+            OnPropertyChanged(nameof(IsTwoDMode));
+            OnPropertyChanged(nameof(IsThreeDMode));
+            OnPropertyChanged(nameof(SelectedSurfaceFunctionId));
             RequestEvaluation();
         }
     }
@@ -150,6 +188,7 @@ public partial class MainViewModel : ObservableObject {
         Functions = new ObservableCollection<FunctionRowViewModel>(
             Document.Functions.Select(f => new FunctionRowViewModel(f, Document, _history, RequestEvaluation)));
         OnPropertyChanged(nameof(Functions));
+        RefreshSurfaceFunctions();
     }
 
     private void RequestEvaluation() {
@@ -171,18 +210,21 @@ public partial class MainViewModel : ObservableObject {
         }
 
         PlotModel = PlotModelFactory.CreateDocumentPlot(Document, PaletteProvider.Colors);
-        MarkdownSummary = BuildMarkdownSummary();
+        DiagnosticsSummary = BuildDiagnosticsSummary();
+        SurfaceMesh = result.SurfaceCache?.Mesh;
+        RefreshSurfaceFunctions();
 
         foreach (var row in Functions) {
             row.Refresh();
         }
     }
 
-    private string BuildMarkdownSummary() {
+    private string BuildDiagnosticsSummary() {
         var lines = new List<string> {
-            $"# Document",
-            $"- AngleMode: **{Document.AngleMode}**",
-            $"- Function count: **{Document.Functions.Count}**",
+            $"Diagnostics summary",
+            $"- AngleMode: {Document.AngleMode}",
+            $"- PlotMode: {Document.PlotMode}",
+            $"- Function count: {Document.Functions.Count}",
             "",
             "## Diagnostics",
             "| Function | Diagnostics |",
@@ -235,7 +277,9 @@ public partial class MainViewModel : ObservableObject {
 
     private static Document CreateDefaultDocument() {
         var document = new Document();
-        document.Functions.Add(new FunctionObject { Name = "f", ExpressionText = "sin(x)", PaletteIndex = 0 });
+        document.Functions.Add(new FunctionObject { Name = "f", ExpressionText = "exp(x^2)/exp(x^2-1)", PaletteIndex = 0 });
+        document.Functions.Add(new FunctionObject { Name = "g", ExpressionText = "g(x,y)=sin(x)+cos(y)", Parameters = new[] { "x", "y" }, PaletteIndex = 1 });
+        document.SelectedSurfaceFunctionId = document.Functions[1].Id;
         document.Symbols.Restore(document.Functions);
         return document;
     }
@@ -260,6 +304,16 @@ public partial class MainViewModel : ObservableObject {
             items.Add(new PaletteOption(i, brush));
         }
         return items;
+    }
+
+    private void RefreshSurfaceFunctions() {
+        SurfaceFunctions = new ObservableCollection<FunctionRowViewModel>(Functions.Where(f => f.Parameters.Length == 2));
+        OnPropertyChanged(nameof(SurfaceFunctions));
+        if (SurfaceFunctions.Count == 0) {
+            SelectedSurfaceFunctionId = null;
+        } else if (SelectedSurfaceFunctionId is null || SurfaceFunctions.All(f => f.Id != SelectedSurfaceFunctionId)) {
+            SelectedSurfaceFunctionId = SurfaceFunctions[0].Id;
+        }
     }
 }
 

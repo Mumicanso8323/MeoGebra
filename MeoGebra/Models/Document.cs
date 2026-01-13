@@ -10,12 +10,20 @@ public enum AngleMode {
     Radians
 }
 
+public enum PlotMode {
+    TwoD,
+    ThreeD
+}
+
 public sealed class Document {
     public Guid DocumentId { get; set; } = Guid.NewGuid();
     public AngleMode AngleMode { get; set; } = AngleMode.Radians;
     public ViewportState Viewport { get; set; } = new(0, 0, 10, 10);
+    public PlotMode PlotMode { get; set; } = PlotMode.TwoD;
+    public Guid? SelectedSurfaceFunctionId { get; set; }
     public List<FunctionObject> Functions { get; set; } = new();
-    public string UserMarkdownNotes { get; set; } = string.Empty;
+    [JsonPropertyName("UserMarkdownNotes")]
+    public string UserNotes { get; set; } = string.Empty;
     [JsonIgnore]
     public SymbolTable Symbols { get; } = new();
 
@@ -24,13 +32,16 @@ public sealed class Document {
             DocumentId = DocumentId,
             AngleMode = AngleMode,
             Viewport = Viewport,
-            UserMarkdownNotes = UserMarkdownNotes
+            PlotMode = PlotMode,
+            SelectedSurfaceFunctionId = SelectedSurfaceFunctionId,
+            UserNotes = UserNotes
         };
         foreach (var function in Functions) {
             clone.Functions.Add(new FunctionObject {
                 Id = function.Id,
                 Name = function.Name,
                 ExpressionText = function.ExpressionText,
+                Parameters = function.Parameters.ToArray(),
                 IsVisible = function.IsVisible,
                 PaletteIndex = function.PaletteIndex,
                 XMin = function.XMin,

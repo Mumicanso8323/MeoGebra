@@ -85,16 +85,15 @@ public sealed class EditExpressionCommand : IHistoryCommand {
     private readonly string _newText;
     private string _oldText;
 
-    public EditExpressionCommand(FunctionObject function, string newText) {
+    public EditExpressionCommand(FunctionObject function, string oldText, string newText) {
         _function = function;
         _newText = newText;
-        _oldText = function.ExpressionText;
+        _oldText = oldText;
     }
 
     public string Description => "Edit expression";
 
     public void Execute() {
-        _oldText = _function.ExpressionText;
         _function.ExpressionText = _newText;
     }
 

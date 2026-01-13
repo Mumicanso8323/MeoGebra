@@ -1,0 +1,57 @@
+:root {
+    color-scheme: light;
+    font-family: "Segoe UI", sans-serif;
+    font-size: 14px;
+}
+
+body {
+    margin: 0;
+    background: #ffffff;
+}
+
+#editor-root {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    padding: 6px;
+}
+
+#math-input {
+    min-height: 36px;
+    border: 1px solid #cccccc;
+    border-radius: 4px;
+    padding: 6px;
+    outline: none;
+    font-family: "Segoe UI", sans-serif;
+    font-size: 14px;
+    white-space: pre-wrap;
+}
+
+    #math-input:focus {
+        border-color: #3a7afe;
+        box-shadow: 0 0 0 2px rgba(58, 122, 254, 0.2);
+    }
+
+#math-preview {
+    min-height: 24px;
+    padding: 4px 6px;
+    border-radius: 4px;
+    background: #f7f7f7;
+    font-size: 16px;
+    font-family: "Cambria Math", "Times New Roman", serif;
+}
+
+    #math-preview sup {
+        font-size: 0.75em;
+        vertical-align: super;
+    }
+
+    #math-preview sub {
+        font-size: 0.75em;
+        vertical-align: sub;
+    }
+
+#math-hint {
+    font-size: 11px;
+    color: #666666;
+}

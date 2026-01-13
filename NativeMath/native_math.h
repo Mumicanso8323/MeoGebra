@@ -11,6 +11,7 @@ extern "C" {
 
     enum class FunctionKind : int32_t {
         Sin = 0,
+        ExpCancel = 1
     };
 
     struct FunctionParams {
@@ -23,6 +24,12 @@ extern "C" {
         double Y;
     };
 
+    struct SampleResult {
+        double X;
+        double Y;
+        int32_t Valid;
+    };
+
     API int SampleFunction(
         FunctionKind kind,
         double x0,
@@ -30,6 +37,16 @@ extern "C" {
         int n,
         FunctionParams p,
         PointD* outPoints
+    );
+
+    API int SampleFunctionExp(
+        FunctionKind kind,
+        double x0,
+        double x1,
+        int n,
+        FunctionParams p,
+        double yLimit,
+        SampleResult* outPoints
     );
 
 } // extern "C"

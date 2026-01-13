@@ -12,7 +12,12 @@ public sealed record BoundConstant(double Value) : BoundExpression {
     public override IEnumerable<Guid> EnumerateDependencies() => Array.Empty<Guid>();
 }
 
-public sealed record BoundVariable() : BoundExpression {
+public enum VariableKind {
+    X,
+    Y
+}
+
+public sealed record BoundVariable(VariableKind Kind) : BoundExpression {
     public override IEnumerable<Guid> EnumerateDependencies() => Array.Empty<Guid>();
 }
 

@@ -11,15 +11,18 @@ public partial class FunctionRowViewModel : ObservableObject {
     private readonly Document _document;
     private readonly HistoryService _history;
     private readonly Action _onEdited;
+    private string _committedExpression;
 
     public FunctionRowViewModel(FunctionObject function, Document document, HistoryService history, Action onEdited) {
         _function = function;
         _document = document;
         _history = history;
         _onEdited = onEdited;
+        _committedExpression = function.ExpressionText;
     }
 
     public Guid Id => _function.Id;
+    public string[] Parameters => _function.Parameters;
 
     public string Name {
         get => _function.Name;
@@ -37,11 +40,24 @@ public partial class FunctionRowViewModel : ObservableObject {
     public string ExpressionText {
         get => _function.ExpressionText;
         set {
+            if (_committedExpression == value) {
+                return;
+            }
+            _history.Execute(new EditExpressionCommand(_function, _committedExpression, value), _document);
+            _committedExpression = value;
+            OnPropertyChanged();
+            _onEdited();
+        }
+    }
+
+    public string PreviewExpressionText {
+        get => _function.ExpressionText;
+        set {
             if (_function.ExpressionText == value) {
                 return;
             }
-            _history.Execute(new EditExpressionCommand(_function, value), _document);
-            OnPropertyChanged();
+            _function.ExpressionText = value;
+            OnPropertyChanged(nameof(ExpressionText));
             _onEdited();
         }
     }
@@ -76,9 +92,13 @@ public partial class FunctionRowViewModel : ObservableObject {
     public string DisplayName => string.IsNullOrWhiteSpace(Name) ? "(unnamed)" : Name;
     
     public void Refresh() {
+        _committedExpression = _function.ExpressionText;
         OnPropertyChanged(nameof(Name));
         OnPropertyChanged(nameof(DisplayName));
         OnPropertyChanged(nameof(HasDiagnostics));
         OnPropertyChanged(nameof(DiagnosticSummary));
+        OnPropertyChanged(nameof(ExpressionText));
+        OnPropertyChanged(nameof(PreviewExpressionText));
+        OnPropertyChanged(nameof(Parameters));
     }
 }

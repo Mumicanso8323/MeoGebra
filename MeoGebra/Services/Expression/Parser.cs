@@ -11,35 +11,44 @@ public sealed class Parser {
     }
 
     public ExpressionInput ParseExpressionInput() {
-        if (IsFunctionDefinition()) {
-            var nameToken = NextToken();
-            _ = Match(TokenKind.LParen);
-            _ = Match(TokenKind.Identifier);
-            _ = Match(TokenKind.RParen);
-            _ = Match(TokenKind.Equals);
+        if (TryParseFunctionHeader(out var name, out var parameters)) {
             var body = ParseExpression();
-            return new ExpressionInput(nameToken.Text, body);
+            return new ExpressionInput(name, parameters, body);
         }
 
-        return new ExpressionInput(null, ParseExpression());
+        return new ExpressionInput(null, new List<string>(), ParseExpression());
     }
 
-    private bool IsFunctionDefinition() {
+    private bool TryParseFunctionHeader(out string name, out List<string> parameters) {
+        name = string.Empty;
+        parameters = new List<string>();
         if (Peek().Kind != TokenKind.Identifier) {
             return false;
         }
         if (Peek(1).Kind != TokenKind.LParen) {
             return false;
         }
-        if (Peek(2).Kind != TokenKind.Identifier) {
+        var tempIndex = _index;
+        _ = NextToken(); // name
+        _ = Match(TokenKind.LParen);
+        if (!Check(TokenKind.RParen)) {
+            do {
+                if (!Match(TokenKind.Identifier)) {
+                    _index = tempIndex;
+                    return false;
+                }
+                parameters.Add(Previous().Text);
+            } while (Match(TokenKind.Comma));
+        }
+        if (!Match(TokenKind.RParen)) {
+            _index = tempIndex;
             return false;
         }
-        if (Peek(3).Kind != TokenKind.RParen) {
+        if (!Match(TokenKind.Equals)) {
+            _index = tempIndex;
             return false;
         }
-        if (Peek(4).Kind != TokenKind.Equals) {
-            return false;
-        }
+        name = _tokens[tempIndex].Text;
         return true;
     }
 

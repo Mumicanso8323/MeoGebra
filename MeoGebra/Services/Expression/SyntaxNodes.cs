@@ -11,4 +11,4 @@ public sealed record BinaryNode(ExpressionNode Left, TokenKind Operator, Express
 public sealed record CallNode(string FunctionName, IReadOnlyList<ExpressionNode> Arguments) : ExpressionNode;
 public sealed record ConditionalNode(ExpressionNode Condition, ExpressionNode WhenTrue, ExpressionNode WhenFalse) : ExpressionNode;
 
-public sealed record ExpressionInput(string? DefinedName, ExpressionNode Body);
+public sealed record ExpressionInput(string? DefinedName, IReadOnlyList<string> Parameters, ExpressionNode Body);

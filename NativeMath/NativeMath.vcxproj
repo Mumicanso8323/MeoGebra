@@ -141,12 +141,14 @@ copy /Y "$(TargetPath)" "$(SolutionDir)MeoGebra\bin\$(Platform)\$(Configuration)
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClInclude Include="ExpReal.h" />
     <ClInclude Include="framework.h" />
     <ClInclude Include="native_math.h" />
     <ClInclude Include="pch.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="dllmain.cpp" />
+    <ClCompile Include="ExpReal.cpp" />
     <ClCompile Include="native_math.cpp" />
     <ClCompile Include="pch.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Create</PrecompiledHeader>
@@ -155,14 +157,19 @@ copy /Y "$(TargetPath)" "$(SolutionDir)MeoGebra\bin\$(Platform)\$(Configuration)
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Create</PrecompiledHeader>
     </ClCompile>
   </ItemGroup>
+  <ItemGroup>
+    <None Include="packages.config" />
+  </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
     <Import Project="..\MeoGebra\packages\CommunityToolkit.Mvvm.8.4.0\build\CommunityToolkit.Mvvm.targets" Condition="Exists('..\MeoGebra\packages\CommunityToolkit.Mvvm.8.4.0\build\CommunityToolkit.Mvvm.targets')" />
+    <Import Project="..\MeoGebra\packages\Microsoft.Web.WebView2.1.0.3650.58\build\native\Microsoft.Web.WebView2.targets" Condition="Exists('..\MeoGebra\packages\Microsoft.Web.WebView2.1.0.3650.58\build\native\Microsoft.Web.WebView2.targets')" />
   </ImportGroup>
   <Target Name="EnsureNuGetPackageBuildImports" BeforeTargets="PrepareForBuild">
     <PropertyGroup>
       <ErrorText>このプロジェクトは、このコンピューター上にない NuGet パッケージを参照しています。それらのパッケージをダウンロードするには、[NuGet パッケージの復元] を使用します。詳細については、http://go.microsoft.com/fwlink/?LinkID=322105 を参照してください。見つからないファイルは {0} です。</ErrorText>
     </PropertyGroup>
     <Error Condition="!Exists('..\MeoGebra\packages\CommunityToolkit.Mvvm.8.4.0\build\CommunityToolkit.Mvvm.targets')" Text="$([System.String]::Format('$(ErrorText)', '..\MeoGebra\packages\CommunityToolkit.Mvvm.8.4.0\build\CommunityToolkit.Mvvm.targets'))" />
+    <Error Condition="!Exists('..\MeoGebra\packages\Microsoft.Web.WebView2.1.0.3650.58\build\native\Microsoft.Web.WebView2.targets')" Text="$([System.String]::Format('$(ErrorText)', '..\MeoGebra\packages\Microsoft.Web.WebView2.1.0.3650.58\build\native\Microsoft.Web.WebView2.targets'))" />
   </Target>
 </Project>

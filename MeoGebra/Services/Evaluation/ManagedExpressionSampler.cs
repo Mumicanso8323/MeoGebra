@@ -28,7 +28,7 @@ public sealed class ManagedExpressionSampler : IExpressionSampler {
                 Flush();
                 continue;
             }
-            var y = Evaluate(function.Expression, x, context.AngleMode, context.Dependencies, i);
+            var y = Evaluate(function.Expression, x, 0, context.AngleMode, context.Dependencies, i);
             if (double.IsNaN(y) || double.IsInfinity(y)) {
                 Flush();
                 continue;
@@ -47,7 +47,7 @@ public sealed class ManagedExpressionSampler : IExpressionSampler {
         }
     }
 
-    private static double Evaluate(BoundExpression expression, double x, AngleMode angleMode, IReadOnlyDictionary<Guid, double[]> deps, int index) {
-        return ExpressionEvaluator.Evaluate(expression, x, angleMode, deps, index);
+    private static double Evaluate(BoundExpression expression, double x, double y, AngleMode angleMode, IReadOnlyDictionary<Guid, double[]> deps, int index) {
+        return ExpressionEvaluator.Evaluate(expression, x, y, angleMode, deps, index);
     }
 }
