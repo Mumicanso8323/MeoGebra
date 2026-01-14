@@ -9,7 +9,7 @@
     </Window.Resources>
     <Grid Margin="8">
         <Grid.ColumnDefinitions>
-            <ColumnDefinition Width="320" MinWidth="320" />
+            <ColumnDefinition Width="420" MinWidth="420" />
             <ColumnDefinition Width="6" />
             <ColumnDefinition Width="*" />
         </Grid.ColumnDefinitions>
@@ -45,7 +45,7 @@
                 <ItemsControl ItemsSource="{Binding Functions}">
                     <ItemsControl.ItemTemplate>
                         <DataTemplate>
-                            <Border BorderThickness="1" BorderBrush="#DDDDDD" Margin="0,0,0,8" Padding="6">
+                            <Border BorderThickness="1" BorderBrush="#DDDDDD" Margin="0,0,0,8" Padding="8" MinHeight="240">
                                 <StackPanel>
                                     <Grid Margin="0,0,0,4">
                                         <Grid.ColumnDefinitions>
@@ -80,11 +80,10 @@
                                                 Command="{Binding DataContext.RemoveFunctionCommand, RelativeSource={RelativeSource AncestorType=Window}}"
                                                 CommandParameter="{Binding}" Margin="6,0,0,0" />
                                     </Grid>
-                                    <controls:MathEditorControl MinHeight="140"
+                                    <controls:MathEditorControl MinHeight="180"
                                                                 HorizontalAlignment="Stretch"
                                                                 VerticalAlignment="Stretch"
-                                                                Text="{Binding ExpressionText, Mode=TwoWay}"
-                                                                PreviewText="{Binding PreviewExpressionText, Mode=TwoWay}" />
+                                                                Text="{Binding ExpressionText, Mode=TwoWay}" />
                                     <TextBlock Text="{Binding DiagnosticSummary}" Foreground="Firebrick" FontSize="11" TextWrapping="Wrap" />
                                 </StackPanel>
                             </Border>

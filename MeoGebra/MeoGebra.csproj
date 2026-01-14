@@ -31,6 +31,10 @@
 		</Content>
 	</ItemGroup>
 
+	<ItemGroup>
+	  <Folder Include="Assets\MathEditor\vendor\mathlive\" />
+	</ItemGroup>
+
 	<Target Name="CopyNativeMath" AfterTargets="Build">
 		<Copy SourceFiles="$(SolutionDir)x64\$(Configuration)\NativeMath.dll" DestinationFolder="$(TargetDir)" SkipUnchangedFiles="true" />
 	</Target>

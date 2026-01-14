@@ -97,7 +97,9 @@ public partial class MathEditorControl : UserControl {
 
     private void OnWebMessageReceived(object? sender, CoreWebView2WebMessageReceivedEventArgs e) {
         try {
-            var payload = JsonSerializer.Deserialize<EditorMessage>(e.WebMessageAsJson);
+            var payload = JsonSerializer.Deserialize<EditorMessage>(
+                e.WebMessageAsJson,
+                new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
             if (payload is null) {
                 return;
             }

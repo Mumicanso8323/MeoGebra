@@ -5,19 +5,19 @@
     <meta http-equiv="X-UA-Compatible" content="IE=edge" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>Math Editor</title>
+    <link rel="stylesheet" href="vendor/mathlive/mathlive-fonts.css" />
+    <link rel="stylesheet" href="vendor/mathlive/mathlive-static.css" />
     <link rel="stylesheet" href="editor.css" />
-    <link rel="stylesheet" href="katex/katex.min.css" />
-    <script defer src="katex/katex.min.js"></script>
+    <script defer src="vendor/mathlive/mathlive.min.js"></script>
 </head>
 <body>
     <div id="editor-root">
         <div id="input-header">
             <span class="label">LaTeX</span>
+            <span class="hint">Press Ctrl+Enter to apply</span>
         </div>
-        <textarea id="latexInput" spellcheck="false" aria-label="LaTeX expression"></textarea>
-        <div id="preview" aria-hidden="true"></div>
+        <math-field id="mf" aria-label="LaTeX expression"></math-field>
         <div id="math-error" role="status" aria-live="polite"></div>
-        <div id="math-hint">Press Ctrl+Enter to apply</div>
     </div>
     <script src="editor.js"></script>
 </body>

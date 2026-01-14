@@ -1,84 +1,54 @@
 :root {
     color-scheme: light;
     font-family: "Segoe UI", sans-serif;
-    font-size: 14px;
 }
 
-html,
-body {
-    height: 100%;
+html, body {
     margin: 0;
+    padding: 0;
+    height: 100%;
+    width: 100%;
     background: #ffffff;
-    overflow: hidden;
 }
 
 #editor-root {
     display: flex;
     flex-direction: column;
     gap: 8px;
-    padding: 8px;
+    padding: 10px;
     height: 100%;
     box-sizing: border-box;
 }
 
 #input-header {
     display: flex;
+    justify-content: space-between;
     align-items: center;
-    gap: 6px;
-}
-
-#input-header .label {
     font-size: 12px;
-    font-weight: 600;
-    color: #444444;
+    color: #555555;
 }
 
-#latexInput {
-    min-height: 80px;
-    border: 1px solid #cccccc;
-    border-radius: 4px;
+    #input-header .label {
+        font-weight: 600;
+    }
+
+    #input-header .hint {
+        font-size: 11px;
+        color: #777777;
+    }
+
+math-field {
+    flex: 1;
+    min-height: 120px;
+    border: 1px solid #d7d7d7;
+    border-radius: 6px;
     padding: 8px;
-    outline: none;
-    font-family: "Cascadia Mono", "Consolas", "Courier New", monospace;
-    font-size: 14px;
-    resize: none;
-    width: 100%;
-    box-sizing: border-box;
+    font-size: 20px;
+    background: #ffffff;
 }
-
-    #latexInput:focus {
-        border-color: #3a7afe;
-        box-shadow: 0 0 0 2px rgba(58, 122, 254, 0.2);
-    }
-
-#preview {
-    min-height: 48px;
-    padding: 6px 8px;
-    border-radius: 4px;
-    background: #f7f7f7;
-    font-size: 16px;
-    font-family: "Cambria Math", "Times New Roman", serif;
-    width: 100%;
-    box-sizing: border-box;
-}
-
-    #preview sup {
-        font-size: 0.75em;
-        vertical-align: super;
-    }
-
-    #preview sub {
-        font-size: 0.75em;
-        vertical-align: sub;
-    }
 
 #math-error {
     min-height: 16px;
     font-size: 11px;
     color: #b00020;
-}
-
-#math-hint {
-    font-size: 11px;
-    color: #666666;
 }
